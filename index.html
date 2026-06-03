@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A letter for you</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    background: #0d0d1a;
+    color: #f0eee8;
+    overflow-x: hidden;
+  }
+  @keyframes drift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translateY(32px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%     { transform: translateX(-8px); }
+    40%     { transform: translateX(8px); }
+    60%     { transform: translateX(-5px); }
+    80%     { transform: translateX(5px); }
+  }
+  @keyframes heartbeat {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.15); }
+  }
+  .stars {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 55% 15%, rgba(255,255,255,.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 80%, rgba(255,255,255,.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 40%, rgba(255,255,255,.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 20% 85%, rgba(255,255,255,.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 92% 10%, rgba(255,255,255,.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 90%, rgba(255,255,255,.3) 0%, transparent 100%);
+  }
+  .page {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem;
+  }
+  #landing { display: flex; }
+  #letter-page { display: none; }
+  .lock-icon {
+    font-size: 48px; margin-bottom: 1.5rem;
+    animation: heartbeat 2.5s ease-in-out infinite;
+  }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 400;
+    text-align: center;
+    margin-bottom: .5rem;
+    letter-spacing: -.5px;
+  }
+  .subtitle {
+    font-size: 14px; color: rgba(240,238,232,.5);
+    margin-bottom: 2.5rem; text-align: center; letter-spacing: .5px;
+  }
+  .input-wrap {
+    display: flex; flex-direction: column; align-items: center; gap: 12px;
+    width: 100%; max-width: 340px;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: rgba(255,255,255,.07);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px;
+    padding: 16px 24px;
+    font-size: 18px; font-family: 'Inter', sans-serif;
+    color: #f0eee8;
+    text-align: center; letter-spacing: 3px; text-transform: uppercase;
+    outline: none; transition: border-color .2s, background .2s;
+  }
+  input[type="text"]::placeholder { letter-spacing: 1px; text-transform: none; opacity: .4; font-size: 14px; }
+  input[type="text"]:focus { border-color: rgba(212,83,126,.6); background: rgba(255,255,255,.1); }
+  .btn {
+    width: 100%;
+    background: linear-gradient(135deg, #c4527a, #9b59b6);
+    border: none; border-radius: 14px;
+    padding: 16px 24px;
+    font-size: 15px; font-weight: 500; font-family: 'Inter', sans-serif;
+    color: #fff; cursor: pointer; letter-spacing: .5px;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:active { transform: scale(.98); }
+  .error-msg {
+    font-size: 13px; color: #f48baa;
+    text-align: center; min-height: 18px;
+  }
+  .error-msg.shake { animation: shake .4s ease; }
+  .letter-wrap {
+    max-width: 680px; width: 100%;
+    animation: floatUp .7s ease forwards;
+  }
+  .letter-from {
+    font-size: 13px; color: rgba(240,238,232,.4);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .letter-name {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    font-weight: 400; font-style: italic;
+    text-align: center; margin-bottom: .25rem;
+    background: linear-gradient(135deg, #f9a8d4, #c084fc, #818cf8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .letter-divider {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,83,126,.5), transparent);
+    margin: 1.2rem auto 2rem;
+  }
+  .photo-strip {
+    display: flex; gap: 10px; justify-content: center;
+    margin-bottom: 2rem; flex-wrap: wrap;
+  }
+  .photo-slot {
+    width: 100px; height: 100px; border-radius: 12px;
+    background: rgba(255,255,255,.06);
+    border: 1px dashed rgba(255,255,255,.15);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; color: rgba(240,238,232,.25);
+    font-size: 11px; letter-spacing: .3px; text-align: center;
+  }
+  .photo-slot span { font-size: 24px; }
+  /* ── REPLACE photo-slot divs with actual <img> tags like this:
+     <img src="YOUR_IMAGE_URL" style="width:100px;height:100px;border-radius:12px;object-fit:cover;"> */
+  .letter-card {
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; padding: 2rem 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .letter-body {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; line-height: 1.9;
+    color: rgba(240,238,232,.85);
+  }
+  .letter-body .salutation { font-style: italic; font-size: 19px; margin-bottom: 1rem; display: block; }
+  .letter-body .sign-off { margin-top: 1.5rem; font-style: italic; display: block; }
+  .song-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 50px; padding: 10px 18px;
+    font-size: 13px; color: rgba(240,238,232,.6);
+    margin-bottom: 2rem;
+  }
+  .song-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #c4527a; animation: heartbeat 1.5s infinite; }
+  .back-btn {
+    background: transparent; border: 1px solid rgba(255,255,255,.2);
+    border-radius: 50px; padding: 10px 24px;
+    font-size: 13px; font-family: 'Inter', sans-serif;
+    color: rgba(240,238,232,.5); cursor: pointer;
+    transition: all .2s; letter-spacing: .5px;
+  }
+  .back-btn:hover { color: #f0eee8; border-color: rgba(255,255,255,.4); }
+</style>
+</head>
+<body>
+<div class="stars"></div>
+
+<!-- ═══════════════════════════════════════════════
+     LANDING PAGE — code entry
+═══════════════════════════════════════════════ -->
+<div class="page" id="landing">
+  <div class="lock-icon">💌</div>
+  <h1>A letter is waiting for you</h1>
+  <p class="subtitle">Enter the code that was given to you</p>
+  <div class="input-wrap">
+    <input type="text" id="codeInput" placeholder="type your code here" maxlength="20" autocomplete="off" spellcheck="false">
+    <button class="btn" onclick="checkCode()">Open my letter →</button>
+    <p class="error-msg" id="errorMsg"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     LETTER PAGE — shown after correct code
+═══════════════════════════════════════════════ -->
+<div class="page" id="letter-page">
+  <div class="letter-wrap">
+    <p class="letter-from">a letter from your person</p>
+    <h2 class="letter-name" id="letterName"></h2>
+    <div class="letter-divider"></div>
+
+    <!-- PHOTOS — replace .photo-slot divs with <img> tags for real photos -->
+    <div class="photo-strip" id="photoStrip"></div>
+
+    <!-- SONG pill — swap text for a real Spotify embed if you want -->
+    <div style="text-align:center">
+      <div class="song-pill">
+        <div class="dot"></div>
+        <span id="songName"></span>
+      </div>
+    </div>
+
+    <div class="letter-card">
+      <div class="letter-body" id="letterBody"></div>
+    </div>
+
+    <div style="text-align:center">
+      <button class="back-btn" onclick="goBack()">← go back</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   YOUR LETTERS — edit this object to add / change friends
+   
+   FORMAT:
+   "CODE": {
+     name: "Friend's name",
+     song: "Song — Artist",
+     photos: ["url1", "url2", "url3"],   ← paste direct image URLs (or leave [] for placeholders)
+     body: `your letter text here`
+   }
+═══════════════════════════════════════════════════════════════ */
+const letters = {
+
+  "SOFIA2025": {
+    name: "Sofia",
+    song: "Lover — Taylor Swift",
+    photos: [],
+    body: `<span class="salutation">Dear Sofia,</span>
+I don't even know where to start. You have been one of the most constant, most genuine people in my life — and I don't say that lightly.<br><br>
+Thank you for always showing up, for laughing at everything, for the late-night calls that lasted way too long. I genuinely don't know what I'd do without you.<br><br>
+This little letter is just my way of telling you that you are loved, seen, and incredibly important to me.
+<span class="sign-off">With all my heart 🤍</span>`
+  },
+
+  "MARCO123": {
+    name: "Marco",
+    song: "Golden — Harry Styles",
+    photos: [],
+    body: `<span class="salutation">Caro Marco,</span>
+You are the kind of person who makes every room feel lighter just by walking in. I hope you know that.<br><br>
+Remember that time we got completely lost and somehow it turned into the best night ever? That's us. That's always going to be us.<br><br>
+I'm so grateful to have you by my side.
+<span class="sign-off">Always yours 🌙</span>`
+  },
+
+  "SUNFLOWER": {
+    name: "Linh",
+    song: "Sunflower — Post Malone",
+    photos: [],
+    body: `<span class="salutation">Hi Linh,</span>
+You are literally sunshine in human form. I hope nobody has ever made you feel otherwise.<br><br>
+Every single memory I have with you makes me smile. You bring out the best in everyone around you, and you don't even realise it.<br><br>
+This is my little reminder that you are so, so loved.
+<span class="sign-off">Your biggest fan 🌻</span>`
+  }
+
+  /* ── ADD MORE FRIENDS BELOW (copy-paste a block, change code + content):
+  ,
+  "YOURCODE": {
+    name: "Friend Name",
+    song: "Song — Artist",
+    photos: [],
+    body: `<span class="salutation">Dear ...,</span>
+Your letter here.
+<span class="sign-off">Sign off here</span>`
+  }
+  */
+};
+
+/* ─── Placeholder emojis for photo slots ─── */
+const placeholderEmojis = ["🌸","✨","🌙","💫","🌷","🎞","📷","🌿"];
+
+function checkCode() {
+  const input = document.getElementById('codeInput').value.trim().toUpperCase();
+  const err = document.getElementById('errorMsg');
+  if (letters[input]) {
+    const l = letters[input];
+    document.getElementById('letterName').textContent = l.name;
+    document.getElementById('letterBody').innerHTML = l.body;
+    document.getElementById('songName').textContent = l.song;
+    const strip = document.getElementById('photoStrip');
+    strip.innerHTML = '';
+    const photoCount = 3;
+    for (let i = 0; i < photoCount; i++) {
+      if (l.photos && l.photos[i]) {
+        const img = document.createElement('img');
+        img.src = l.photos[i];
+        img.style.cssText = 'width:100px;height:100px;border-radius:12px;object-fit:cover;';
+        strip.appendChild(img);
+      } else {
+        const slot = document.createElement('div');
+        slot.className = 'photo-slot';
+        slot.innerHTML = `<span>${placeholderEmojis[i % placeholderEmojis.length]}</span>photo ${i+1}`;
+        strip.appendChild(slot);
+      }
+    }
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('letter-page').style.display = 'flex';
+    window.scrollTo(0, 0);
+  } else {
+    err.textContent = input ? "Hmm, that code doesn't match anyone's letter..." : "Please enter your code first";
+    err.classList.remove('shake');
+    void err.offsetWidth;
+    err.classList.add('shake');
+  }
+}
+
+document.getElementById('codeInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkCode();
+});
+
+function goBack() {
+  document.getElementById('letter-page').style.display = 'none';
+  document.getElementById('landing').style.display = 'flex';
+  document.getElementById('codeInput').value = '';
+  document.getElementById('errorMsg').textContent = '';
+}
+</script>
+</body>
+</html>
